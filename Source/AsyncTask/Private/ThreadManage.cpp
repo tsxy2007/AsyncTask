@@ -19,6 +19,10 @@ void FThreadManage::Destory()
 		Instance = nullptr;
 	}
 }
+
+
+
+
 //
 //void FThreadManage::Init(int32 ThreadNum)
 //{

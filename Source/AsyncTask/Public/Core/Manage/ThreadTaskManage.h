@@ -2,8 +2,9 @@
 #include "CoreMinimal.h"
 #include "Interface/ThreadManageInterface.h"
 #include "Tickable.h"
+#include "ManageBase/ThreadManageBase.h"
 
-class ASYNCTASK_API FThreadTaskManagement : public IThreadTaskContainer, public FTickableGameObject
+class ASYNCTASK_API FThreadTaskManagement : public FThreadTemplate<IThreadTaskContainer>, public FTickableGameObject
 {
 public:
 	~FThreadTaskManagement();
@@ -12,42 +13,7 @@ private:
 	//tick
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override;
-public:
-	template<class UserClass, typename... VarTypes>
-	inline void CreateRaw(UserClass* TargetClass, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InMethod, VarTypes... Vars)
-	{
-		*this^FSimpleDelegate::CreateRaw(TargetClass, InMethod, Vars...);
-	}
 
-	template<class UserClass, typename... VarTypes>
-	inline void CreateSP(const TSharedRef<UserClass>& TargetClass, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InMethod, VarTypes... Vars)
-	{
-		*this ^ FSimpleDelegate::CreateSP(TargetClass, InMethod, Vars...);
-	}
-
-	template <typename UObjectTemplate, typename... VarTypes>
-	inline void CreateUFunction(UObjectTemplate* InUserObject, const FName& InFunctionName, VarTypes... Vars)
-	{
-		 *this ^ FSimpleDelegate::CreateUFunction(InUserObject, InFunctionName, Vars...);
-	}
-
-	template<class UserClass, typename... VarTypes>
-	inline void CreateUObject(UserClass* TargetClass, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InMethod, VarTypes... Vars)
-	{
-		 *this ^ FSimpleDelegate::CreateUFunction(InUserObject, InFunctionName, Vars...);
-	}
-
-	template < typename FuncType, typename... VarTypes>
-	inline void CreateStatic(FuncType InFunc, VarTypes... Vars)
-	{
-		 *this ^ FSimpleDelegate::CreateStatic(InFunc, Vars...);
-	}
-
-	template <typename FuncType, typename... VarTypes>
-	inline void CreateLambda(FuncType&& InFunc, VarTypes... Vars)
-	{
-		 *this ^ FSimpleDelegate::CreateLambda(InFunc, Vars...);
-	}
 };
 
 FThreadTaskManagement::~FThreadTaskManagement()
@@ -88,7 +54,7 @@ void FThreadTaskManagement::Tick(float DeltaTime)
 		if (!((TTaskQueue*)this)->IsEmpty())
 		{
 			FSimpleDelegate Delegate;
-			if (*this >> (Delegate))
+			if (*this <<= (Delegate))
 			{
 				ThreadProxy->GetThreadDelegate() = Delegate;
 				ThreadProxy->WakeupThread();

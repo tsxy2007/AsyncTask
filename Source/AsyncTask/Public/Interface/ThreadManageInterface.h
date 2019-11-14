@@ -32,14 +32,14 @@ public:
 		return Proxy->GetThreadHandle();
 	}
 
-	FThreadHandle operator^(const FSimpleDelegate& Delegate)
+	FThreadHandle operator>>(const FSimpleDelegate& Delegate)
 	{
 		FThreadHandle Handle = nullptr;
 		{
 			MUTEX_LOCL;
 			for (auto& Proxy : *this)
 			{
-				if (Proxy->IsSuspend())
+				if (Proxy->IsSuspend() && !Proxy->GetThreadDelegate().IsBound())
 				{
 					Proxy->GetThreadDelegate() = Delegate;
 					Handle = Proxy->GetThreadHandle();
@@ -63,7 +63,7 @@ public:
 			MUTEX_LOCL;
 			for (auto& Proxy : *this)
 			{
-				if (Proxy->IsSuspend())
+				if (Proxy->IsSuspend() && !Proxy->GetThreadDelegate().IsBound())
 				{
 					Proxy->GetThreadDelegate() = Delegate;
 					Proxy->WakeupThread();
@@ -109,7 +109,7 @@ public:
 		this->Enqueue(Delegate);
 	}
 
-	bool operator>>(FSimpleDelegate& Delegate)
+	bool operator<<=(FSimpleDelegate& Delegate)
 	{
 		MUTEX_LOCL;
 		return this->Dequeue(Delegate);
@@ -122,14 +122,14 @@ public:
 		return *this;
 	}
 
-	IThreadTaskContainer& operator^(const FSimpleDelegate & Delegate)
+	IThreadTaskContainer& operator>>(const FSimpleDelegate & Delegate)
 	{
 		bool bSuccessful = false;
 		{
 			MUTEX_LOCL;
 			for (auto& Tmp : *this)
 			{
-				if (Tmp->IsSuspend())
+				if (Tmp->IsSuspend() && !Tmp->GetThreadDelegate().IsBound())
 				{
 					Tmp->GetThreadDelegate() = Delegate;
 					Tmp->WakeupThread();
